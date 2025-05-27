@@ -10,7 +10,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// For Firebase 
 const firebaseConfig = {
   apiKey: "AIzaSyDXjmGepaQKXJITGUOIwjw_6AuZxtDHLZ8",
   authDomain: "campus-connect-8a7e7.firebaseapp.com",
