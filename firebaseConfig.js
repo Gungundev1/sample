@@ -1,7 +1,7 @@
-// firebaseConfig.js
+firebaseConfig.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getFirestore,getStorage, collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const firebaseConfig = {
  
@@ -21,3 +21,8 @@ const firebaseConfig = {
   appId: "1:672031438837:web:21c2e3a9f2b3b27bb552bc",
   measurementId: "G-M6JKPFBVNC"
 };
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> dc6a93e (update)
