@@ -2,101 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Upload Notes - Campus Connect</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <title>Upload Notes (No Firebase)</title>
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      display: flex;
-      height: 100vh;
-    }
-
-    .container {
-      display: flex;
-      width: 100%;
-    }
-
-    .left, .right {
-      flex: 1;
-      padding: 30px;
-      box-sizing: border-box;
-    }
-
-    .left {
-      background: #f4f4f4;
-    }
-
-    .right {
-      background: #eaeaea;
-      overflow-y: auto;
-    }
-
-    h2 {
-      margin-top: 0;
-    }
-
-    input[type="text"],
-    input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      padding: 10px 20px;
-      background: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #45a049;
-    }
-
-    .note {
-      background: white;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .note h3 {
-      margin: 0;
-      font-size: 18px;
-    }
-
-    .note img {
-      margin-top: 10px;
-      width: 100%;
-      max-height: 250px;
-      object-fit: contain;
-      border-radius: 8px;
-    }
+    body { font-family: sans-serif; display: flex; margin: 0; height: 100vh; }
+    .container { display: flex; width: 100%; }
+    .left, .right { flex: 1; padding: 20px; box-sizing: border-box; }
+    .left { background: #ddd; }
+    .right { background: #eee; overflow-y: auto; }
+    input, button { display: block; width: 100%; margin: 10px 0; padding: 10px; }
+    .note { background: white; padding: 10px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 0 5px #ccc; }
+    .note img { max-width: 100%; border-radius: 5px; margin-top: 10px; }
   </style>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 </head>
 <body>
 
 <div class="container">
-  <!-- Left Side: Upload Notes -->
   <div class="left">
     <h2>Upload Notes</h2>
     <input type="text" id="noteTitle" placeholder="Enter Title">
     <input type="file" id="noteFile" accept="image/*">
     <button onclick="uploadNote()">Upload</button>
   </div>
-
-  <!-- Right Side: View Notes -->
   <div class="right">
     <h2>Uploaded Notes</h2>
     <div id="notesList"></div>
@@ -104,71 +30,85 @@
 </div>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAWjYAe_DujxqvFzZM6Miiqb35KUZBK9eA",
-  authDomain: "campusconnect-80fe4.firebaseapp.com",
-  projectId: "campusconnect-80fe4",
-  storageBucket: "campusconnect-80fe4.firebasestorage.app",
-  messagingSenderId: "302197289485",
-  appId: "1:302197289485:web:7d4b36e9c628485f3c9b44",
-  measurementId: "G-JZ1QR30Q29"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const storage = firebase.storage();
+  const notes = [];
 
   function uploadNote() {
-    const title = document.getElementById("noteTitle").value;
-    const file = document.getElementById("noteFile").files[0];
+    const title = document.getElementById('noteTitle').value;
+    const fileInput = document.getElementById('noteFile');
+    const file = fileInput.files[0];
 
     if (!title || !file) {
-      alert("Please provide title and select a photo.");
+      alert('Please provide both title and image.');
       return;
     }
 
-    const storageRef = storage.ref('notes/' + Date.now() + '_' + file.name);
-    storageRef.put(file)
-      .then(snapshot => snapshot.ref.getDownloadURL())
-      .then(url => {
-        return db.ref("notes").push({
-          title: title,
-          imageUrl: url,
-          timestamp: Date.now()
-        });
-      })
-      .then(() => {
-        alert("Note uploaded successfully!");
-        document.getElementById("noteTitle").value = "";
-        document.getElementById("noteFile").value = "";
-      })
-      .catch(error => {
-        alert("Upload failed: " + error.message);
-      });
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const imageUrl = event.target.result;
+      notes.unshift({ title, imageUrl, timestamp: Date.now() });
+      displayNotes();
+      fileInput.value = '';
+      document.getElementById('noteTitle').value = '';
+    };
+    reader.readAsDataURL(file);
   }
 
-  function loadNotes() {
-    db.ref("notes").on("value", snapshot => {
-      const data = snapshot.val();
-      const list = document.getElementById("notesList");
-      list.innerHTML = "";
-
-      if (data) {
-        const sorted = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
-        sorted.forEach(note => {
-          const div = document.createElement("div");
-          div.className = "note";
-          div.innerHTML = `<h3>${note.title}</h3><img src="${note.imageUrl}" alt="${note.title}" />`;
-          list.appendChild(div);
-        });
-      } else {
-        list.innerHTML = "<p>No notes uploaded yet.</p>";
-      }
+  function displayNotes() {
+    const list = document.getElementById('notesList');
+    list.innerHTML = '';
+    notes.forEach(note => {
+      const div = document.createElement('div');
+      div.className = 'note';
+      div.innerHTML = `<h3>${note.title}</h3><img src="${note.imageUrl}" alt="${note.title}">`;
+      list.appendChild(div);
     });
   }
-
-  loadNotes();
 </script>
+
+
+
+ <!-- <script>
+  const notes = [];
+
+  async function uploadNote() {
+    const title = document.getElementById('noteTitle').value;
+    const fileInput = document.getElementById('noteFile');
+    const file = fileInput.files[0];
+
+    if (!title || !file) {
+      alert('Please provide both title and image.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('noteFile', file);
+
+    const response = await fetch('http://localhost:3000/upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    notes.unshift({ title, imageUrl: data.imageUrl });
+    displayNotes();
+
+    fileInput.value = '';
+    document.getElementById('noteTitle').value = '';
+  }
+
+  function displayNotes() {
+    const list = document.getElementById('notesList');
+    list.innerHTML = '';
+    notes.forEach(note => {
+      const div = document.createElement('div');
+      div.className = 'note';
+      div.innerHTML = `<h3>${note.title}</h3><img src="${note.imageUrl}" alt="${note.title}">`;
+      list.appendChild(div);
+    });
+  }
+</script>
+ -->
 
 </body>
 </html>

@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #eef2f7;
+      background: #8a8686;
       margin: 0;
       padding: 40px;
       display: flex;
@@ -14,7 +14,7 @@
     }
 
     .section {
-      background: #fff;
+      background: #eaeaea;
       border-radius: 10px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       padding: 30px;
@@ -82,15 +82,17 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
   <script>
-    // Replace with your Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDXjmGepaQKXJITGUOIwjw_6AuZxtDHLZ8",
-      authDomain: "campus-connect-8a7e7.firebaseapp.com",
-      projectId: "campus-connect-8a7e7",
-      storageBucket: "campus-connect-8a7e7.appspot.com",
-      messagingSenderId: "672031438837",
-      appId: "1:672031438837:web:21c2e3a9f2b3b27bb552bc"
-    };
+   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDXjmGepaQKXJITGUOIwjw_6AuZxtDHLZ8",
+  authDomain: "campus-connect-8a7e7.firebaseapp.com",
+  databaseURL: "https://campus-connect-8a7e7-default-rtdb.firebaseio.com",
+  projectId: "campus-connect-8a7e7",
+  storageBucket: "campus-connect-8a7e7.firebasestorage.app",
+  messagingSenderId: "672031438837",
+  appId: "1:672031438837:web:21c2e3a9f2b3b27bb552bc",
+  measurementId: "G-M6JKPFBVNC"
+};
 
     firebase.initializeApp(firebaseConfig);
     const storage = firebase.storage();
@@ -106,23 +108,27 @@
         return;
       }
 
-      const ref = storage.ref("lostfound/" + file.name);
-      ref.put(file).then(snapshot => snapshot.ref.getDownloadURL())
-      .then(url => {
-        return db.collection("lostfound").add({
-          title: title,
-          description: description,
-          imageUrl: url,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      const filename = Date.now() + "_" + file.name;
+      const ref = storage.ref("lostfound/" + filename);
+
+      ref.put(file)
+        .then(snapshot => snapshot.ref.getDownloadURL())
+        .then(url => {
+          return db.collection("lostfound").add({
+            title: title,
+            description: description,
+            imageUrl: url,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        })
+        .then(() => {
+          alert("Item uploaded successfully!");
+          loadItems();
+        })
+        .catch(err => {
+          console.error("Error during upload:", err);
+          alert("Upload failed: " + err.message);
         });
-      })
-      .then(() => {
-        alert("Item uploaded successfully!");
-        loadItems();
-      })
-      .catch(err => {
-        alert("Upload failed: " + err.message);
-      });
     }
 
     function loadItems() {
@@ -130,22 +136,23 @@
       list.innerHTML = "";
 
       db.collection("lostfound").orderBy("timestamp", "desc").get()
-      .then(snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const div = document.createElement("div");
-          div.className = "item";
-          div.innerHTML = `
-            <strong>${data.title}</strong><br>
-            <p>${data.description}</p>
-            <img src="${data.imageUrl}" />
-          `;
-          list.appendChild(div);
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const div = document.createElement("div");
+            div.className = "item";
+            div.innerHTML = `
+              <strong>${data.title}</strong><br>
+              <p>${data.description}</p>
+              <img src="${data.imageUrl}" />
+            `;
+            list.appendChild(div);
+          });
         });
-      });
     }
 
     window.onload = loadItems;
   </script>
 </body>
 </html>
+
