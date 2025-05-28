@@ -43,10 +43,10 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 });
 
 // Fetch all notes
-app.get('/notes', async (req, res) => {
-  const notes = await Note.find().sort({ timestamp: -1 });
-  res.json(notes);
+app.get('/', (req, res) => {
+  res.send('📚 Welcome to Notes App API. Use POST /upload and GET /notes.');
 });
+
 
 // Start server
 app.listen(3000, () => {
