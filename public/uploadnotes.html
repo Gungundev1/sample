@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Upload Notes (No Firebase)</title>
+  <title>Upload Notes</title>
   <style>
     body { font-family: sans-serif; display: flex; margin: 0; height: 100vh; }
     .container { display: flex; width: 100%; }
@@ -11,7 +11,14 @@
     .right { background: #eee; overflow-y: auto; }
     input, button { display: block; width: 100%; margin: 10px 0; padding: 10px; }
     .note { background: white; padding: 10px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 0 5px #ccc; }
-    .note img { max-width: 100%; border-radius: 5px; margin-top: 10px; }
+    .note img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
   </style>
 </head>
 <body>
@@ -30,53 +37,70 @@
 </div>
 
 <script>
-  
   const notes = [];
 
+  function displayNotes() {
+  const container = document.getElementById('notesList');
+  container.innerHTML = '';
+  notes.forEach(note => {
+    const noteElement = document.createElement('div');
+    noteElement.className = 'note';
+    noteElement.innerHTML = `
+      <h3>${note.title}</h3>
+      <img src="${note.imageUrl}" alt="${note.title}">
 
-async function uploadNote() {
-  const title = document.getElementById('noteTitle').value;
-  const fileInput = document.getElementById('noteFile');
-  const file = fileInput.files[0];
+    `;
+    container.appendChild(noteElement);
+  });
+}
 
-  if (!title || !file) {
-    alert('Please provide both title and image.');
-    return;
-  }
 
-  const formData = new FormData();
-  formData.append('title', title);
-  formData.append('file', file);
+  async function uploadNote() {
+    const title = document.getElementById('noteTitle').value;
+    const fileInput = document.getElementById('noteFile');
+    const file = fileInput.files[0];
 
-  try {
-    const response = await fetch('http://localhost:3000/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    const result = await response.json();
-    if (result.success) {
-      // Add the uploaded note to the UI
-      notes.unshift(result.note);
-      displayNotes();
-      fileInput.value = '';
-      document.getElementById('noteTitle').value = '';
+    if (!file || !title) {
+      alert("Please enter a title and select a file.");
+      return;
     }
-  } catch (error) {
-    console.error('Upload failed:', error);
-  }
-}
 
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('file', file);
 
-window.onload = async function() {
-  try {
-    const response = await fetch('http://localhost:3000/notes');
-    const data = await response.json();
-    notes.push(...data); // Load existing notes from server
-    displayNotes();
-  } catch (error) {
-    console.error('Failed to fetch notes:', error);
+    try {
+      const response = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('Upload successful!');
+        notes.unshift(result.note);
+        displayNotes();
+      } else {
+        alert('Upload failed: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Upload failed: ' + error.message);
+    }
   }
-}
+
+  window.onload = async function () {
+    try {
+      const res = await fetch('http://localhost:3000/notes');
+      const data = await res.json();
+      if (data.success) {
+        notes.push(...data.notes);
+        displayNotes();
+      }
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
+    }
+  };
 </script>
 </body>
 </html>
